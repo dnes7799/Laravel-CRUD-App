@@ -1,0 +1,54 @@
+version: '3.8'
+networks:
+  laravelApis:
+services:
+
+  #app service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    volumes: 
+    - .:/var/www/html
+    ports: 
+      - "9000:9000"
+    #depends_on:
+     # - mysqlLaravelApis
+    networks:
+      - laravelApis
+
+  #web server service
+  nginxLaravelApis:
+    image: nginx:stable-alpine
+    container_name: nginxLaravelApis
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    #depends_on:
+     #  - app
+      # - mysqlLaravelApis
+    networks:
+      - laravelApis
+
+  #database service
+  mysqlLaravelApis: 
+    image: mysql:8.0
+    container_name: mysqlLaravelApis
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql_files:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+     # MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    networks: 
+      - laravelApis
